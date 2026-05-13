@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClubChat — AI communication for private clubs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Jost:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    /* ClubChat brand — forest green + warm cream, from dashboard */
+    --bg: #f5f0e6;
+    --bg-2: #ede6d6;
+    --fg: #1a2420;
+    --fg-dim: rgba(26, 36, 32, 0.62);
+    --border: rgba(26, 36, 32, 0.1);
+    --border-strong: rgba(26, 36, 32, 0.22);
+    --card: rgba(26, 36, 32, 0.025);
+    --accent: #1d3a32;           /* pine */
+    --accent-2: #c98d2a;         /* amber gold */
+    --accent-warm: #c98d2a;      /* for italic */
+    --accent-blue: #4a7ab8;
+    --accent-green: #3d8b5d;
+    --accent-orange: #d97757;
+    --backdrop: #0f2420;
+    --footer-bg: #0f2420;
+    --footer-fg: #e8e6df;
+    --footer-dim: rgba(232, 230, 223, 0.55);
+
+    --serif-font: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+    --ui-font: 'Jost', 'DM Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --mono-font: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  [data-theme="dark"] {
+    --bg: #0f2420;
+    --bg-2: #0a1c18;
+    --fg: #f0ead8;
+    --fg-dim: rgba(240, 234, 216, 0.62);
+    --border: rgba(240, 234, 216, 0.08);
+    --border-strong: rgba(240, 234, 216, 0.18);
+    --card: rgba(240, 234, 216, 0.025);
+    --accent: #c98d2a;
+    --accent-2: #e0a84b;
+    --accent-warm: #e0a84b;
+    --accent-blue: #6ea8ff;
+    --accent-green: #5ab37c;
+    --accent-orange: #e08a63;
+    --backdrop: #081614;
+    --footer-bg: #081614;
+    --footer-fg: #f0ead8;
+    --footer-dim: rgba(240, 234, 216, 0.55);
+  }
+
+  [data-fonts="serif-focus"] {
+    --serif-font: 'Playfair Display', Georgia, serif;
+    --ui-font: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  }
+  [data-fonts="newsreader"] {
+    --serif-font: 'Cormorant Garamond', Georgia, serif;
+    --ui-font: 'Jost', ui-sans-serif, system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font-family: var(--ui-font);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  /* scroll reveal */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.9s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .reveal.in {
+    opacity: 1;
+    transform: none;
+  }
+
+  button:hover { opacity: 0.88; }
+  button { transition: opacity 0.15s; }
+
+  /* tweaks panel */
+  .tweaks-panel {
+    position: fixed; bottom: 20px; right: 20px;
+    width: 280px;
+    background: var(--bg-2);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    padding: 16px;
+    z-index: 100;
+    font-family: var(--ui-font);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    display: none;
+  }
+  .tweaks-panel.on { display: block; }
+  .tweaks-panel h3 {
+    font-family: var(--mono-font);
+    font-size: 10px; letter-spacing: 0.14em;
+    color: var(--fg-dim); margin: 0 0 12px;
+    font-weight: 600;
+  }
+  .tweaks-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 10px;
+  }
+  .tweaks-label {
+    font-size: 11px; color: var(--fg-dim);
+    font-family: var(--mono-font); width: 60px;
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .tweaks-options {
+    display: flex; gap: 4px; flex: 1; flex-wrap: wrap;
+  }
+  .tweaks-chip {
+    padding: 4px 8px; border-radius: 4px;
+    font-size: 11px; font-family: var(--ui-font);
+    background: var(--card); color: var(--fg-dim);
+    border: 1px solid var(--border); cursor: pointer;
+  }
+  .tweaks-chip.active {
+    background: var(--accent); color: var(--bg);
+    border-color: var(--accent);
+  }
+  .tweaks-input {
+    flex: 1; padding: 6px 8px; border-radius: 4px;
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--fg); font-family: var(--ui-font); font-size: 12px;
+    outline: none;
+  }
+</style>
+
+<style id="print-styles">
+  @page { size: A4 portrait; margin: 1cm; }
+  @media print {
+    html, body {
+      background: var(--bg) !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      animation: none !important;
+      transition: none !important;
+    }
+    .tweaks-panel { display: none !important; }
+    .reveal { opacity: 1 !important; transform: none !important; }
+    /* Avoid splitting key elements across pages */
+    section, .card, figure, table { break-inside: avoid; page-break-inside: avoid; }
+    img, svg { max-width: 100% !important; height: auto !important; break-inside: avoid; }
+    /* Hide elements that depend on viewport-fixed positioning */
+    [style*="position: fixed"], [style*="position:fixed"] { position: static !important; }
+  }
+</style>
+
+</head>
+<body>
+<div data-screen-label="01 ClubChat Landing" id="root"></div>
+
+<div class="tweaks-panel" id="tweaks-panel">
+  <h3>✦ TWEAKS</h3>
+  <div class="tweaks-row">
+    <span class="tweaks-label">Theme</span>
+    <div class="tweaks-options" id="tweak-theme"></div>
+  </div>
+  <div class="tweaks-row">
+    <span class="tweaks-label">Fonts</span>
+    <div class="tweaks-options" id="tweak-fonts"></div>
+  </div>
+  <div class="tweaks-row" style="flex-direction: column; align-items: stretch; gap: 6px;">
+    <span class="tweaks-label">Headline</span>
+    <input class="tweaks-input" id="tweak-pre" placeholder="pre" />
+    <input class="tweaks-input" id="tweak-italic" placeholder="italic word" />
+  </div>
+</div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script src="image-slot.js"></script>
+<script type="text/babel" src="components/campaign-calendar.jsx"></script>
+<script type="text/babel" src="components/ai-assistant.jsx"></script>
+<script type="text/babel" src="components/animated-assistant.jsx"></script>
+<script type="text/babel" src="components/design-demo.jsx"></script>
+<script type="text/babel" src="components/lead-crm.jsx"></script>
+<script type="text/babel" src="components/hero.jsx"></script>
+<script type="text/babel" src="components/sections.jsx"></script>
+
+<script type="text/babel">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "theme": "cream",
+  "fonts": "fraunces",
+  "headlinePre": "an AI that",
+  "headlineItalic": "knows your club."
+}/*EDITMODE-END*/;
+
+function App() {
+  const [tweaks, setTweaks] = React.useState(TWEAK_DEFAULTS);
+
+  React.useEffect(() => {
+    document.documentElement.setAttribute('data-theme', tweaks.theme);
+    document.documentElement.setAttribute('data-fonts', tweaks.fonts);
+  }, [tweaks]);
+
+  // Edit-mode protocol
+  React.useEffect(() => {
+    function onMsg(e) {
+      const d = e.data || {};
+      if (d.type === '__activate_edit_mode') {
+        document.getElementById('tweaks-panel').classList.add('on');
+      } else if (d.type === '__deactivate_edit_mode') {
+        document.getElementById('tweaks-panel').classList.remove('on');
+      }
+    }
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
+  // Wire tweaks panel
+  React.useEffect(() => {
+    const themeBox = document.getElementById('tweak-theme');
+    const fontBox = document.getElementById('tweak-fonts');
+    themeBox.innerHTML = '';
+    fontBox.innerHTML = '';
+
+    [['cream','Cream'],['dark','Forest']].forEach(([v,l])=>{
+      const b = document.createElement('button');
+      b.className = 'tweaks-chip' + (tweaks.theme === v ? ' active' : '');
+      b.textContent = l;
+      b.onclick = () => {
+        const next = { ...tweaks, theme: v };
+        setTweaks(next);
+        window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { theme: v } }, '*');
+      };
+      themeBox.appendChild(b);
+    });
+
+    [['fraunces','Cormorant'],['newsreader','Playfair'],['serif-focus','Playfair + DM']].forEach(([v,l])=>{
+      const b = document.createElement('button');
+      b.className = 'tweaks-chip' + (tweaks.fonts === v ? ' active' : '');
+      b.textContent = l;
+      b.onclick = () => {
+        const next = { ...tweaks, fonts: v };
+        setTweaks(next);
+        window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { fonts: v } }, '*');
+      };
+      fontBox.appendChild(b);
+    });
+
+    const preIn = document.getElementById('tweak-pre');
+    const itIn = document.getElementById('tweak-italic');
+    preIn.value = tweaks.headlinePre;
+    itIn.value = tweaks.headlineItalic;
+    preIn.oninput = (e) => {
+      const next = { ...tweaks, headlinePre: e.target.value };
+      setTweaks(next);
+      window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { headlinePre: e.target.value } }, '*');
+    };
+    itIn.oninput = (e) => {
+      const next = { ...tweaks, headlineItalic: e.target.value };
+      setTweaks(next);
+      window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { headlineItalic: e.target.value } }, '*');
+    };
+  }, [tweaks]);
+
+  // Scroll reveal
+  React.useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) e.target.classList.add('in');
+      });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <>
+      <Hero tweaks={tweaks} />
+      <div className="reveal"><FeatureTabs theme={tweaks.theme} /></div>
+      <div className="reveal"><ComparisonTable /></div>
+      <div className="reveal"><Sponsors /></div>
+      <div className="reveal"><Testimonials /></div>
+      <div className="reveal"><FAQ /></div>
+      <div className="reveal"><FinalCTA /></div>
+      <div className="reveal"><Footer /></div>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+
+<script>
+(function(){
+  function ready() {
+    return new Promise(resolve => {
+      if (document.readyState === 'complete') resolve();
+      else window.addEventListener('load', () => resolve(), { once: true });
+    });
+  }
+  async function go() {
+    await ready();
+    try { if (document.fonts && document.fonts.ready) { await document.fonts.ready; } } catch(e){}
+    // Wait until React has rendered and reveal elements exist
+    let tries = 0;
+    while (tries < 40 && document.querySelectorAll('.reveal').length === 0) {
+      await new Promise(r => setTimeout(r, 100));
+      tries++;
+    }
+    // Force reveals to be visible immediately
+    document.querySelectorAll('.reveal').forEach(el => el.classList.add('in'));
+    // Disable tweaks-available postMessage from triggering UI
+    await new Promise(r => setTimeout(r, 800));
+    window.print();
+  }
+  go();
+})();
+</script>
+
+</body>
+</html>
